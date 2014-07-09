@@ -1,0 +1,14 @@
+MIDlet-1: Body,,apps.Body
+MIDlet-Jar-Size: 13023
+MIDlet-Jar-URL: Office.jar
+MIDlet-Name: RestAPI
+MIDlet-Permission-1: javax.microedition.io.SocketProtocolPermission "socket://*:*"
+MIDlet-Permission-2: javax.microedition.io.SocketProtocolPermission "socket://:*"
+MIDlet-Permission-3: java.util.PropertyPermission "*" "read"
+MIDlet-Permission-4: javax.microedition.io.HttpProtocolPermission "http://*:*"
+MIDlet-Permission-5: jdk.dio.i2cbus.I2CPermission "*:*" "open"
+MIDlet-Permission-6: jdk.dio.DeviceMgmtPermission "*:*" "open"
+MIDlet-Vendor: drevn_000
+MIDlet-Version: 1.0
+MicroEdition-Configuration: CLDC-1.8
+MicroEdition-Profile: MEEP-8.0
