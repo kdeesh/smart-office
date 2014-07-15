@@ -36,9 +36,12 @@ public class Body extends MIDlet
    private double temp = 0;
    private I2CDevice temperature_sensor = null;
    private GPIOPin led1 = null;
+   private GPIOPin moving_sensor = null;
    private final int LED_PIN_NUM = 23;
+   private final int MOVING_PIN_NUM = 17;
    CheckLED checker = null;
-   SendTemperature measuring = null;
+   CheckMotion detector = null;
+   CheckTemperature measuring = null;
    String hash = null;
    String dev_id = null;
    private final int TEMP_ADRESS = 0x4f;
@@ -55,6 +58,43 @@ public class Body extends MIDlet
    private final int ACC_CONF_VAL = 0x00;
    private final int REG_START_CONV = 0xEE;
    private final int REG_STOP_CONV = 0x22; 
+   
+   void TurnLEDon(GPIOPin led, int time, boolean blink)
+   {
+       try
+       {
+           if (blink)
+           {
+               int times = 0;
+               for (times = 0; times < 10; times++)
+               {
+                   sleep(time * 50);
+                   led.setValue(true);
+                   sleep(time * 50);
+                   led.setValue(false);
+               }
+           }
+           else
+           {
+                led.setValue(true);
+                sleep(time * 1000);
+                led.setValue(false);
+           }
+       }
+       catch (Throwable ex) 
+       {
+           ex.printStackTrace();
+       }
+  
+       try
+       {
+           led.setValue(false);
+       }
+       catch (Throwable ex) 
+       {
+           ex.printStackTrace();
+       }
+   }
    
    String getDataFromServer(String serverUrl)
    {
@@ -232,7 +272,7 @@ public class Body extends MIDlet
         }
     }
     
-    public class SendTemperature extends Thread 
+    public class CheckTemperature extends Thread 
     {
         boolean quit = false;
         public void run()
@@ -301,32 +341,91 @@ public class Body extends MIDlet
         }
     }
     
+    
+    
+    public class CheckMotion extends Thread 
+    {
+        boolean quit = false;
+        public void run()
+        {
+            quit = false;
+            boolean alarm = true;
+            try
+            {
+                moving_sensor = (GPIOPin) DeviceManager.open(MOVING_PIN_NUM);
+            }
+            catch (Throwable ex)
+            {
+                System.out.println("Error while opening " + MOVING_PIN_NUM + "PIN");
+                ex.printStackTrace();
+                return;
+            }
+            try 
+            {
+                led1 = (GPIOPin) DeviceManager.open(LED_PIN_NUM); //if LED == 1
+            }
+            catch (IOException ex) 
+            {
+                System.out.println("open GPIO error, pin = " + LED_PIN_NUM);
+                ex.printStackTrace();
+            }
+            while( !quit )
+            {
+                
+
+                try 
+                {
+                    alarm = moving_sensor.getValue();
+                    System.out.println(MOVING_PIN_NUM + " pin is " + alarm );
+                } 
+                catch (Throwable ex) 
+                {
+                    ex.printStackTrace();
+                }
+                if (!alarm)
+                {
+                    alarm = true;
+                    TurnLEDon(led1, 4, true);
+                }
+            }
+        }
+        public void quit() throws IOException
+        {
+            quit = true;
+            moving_sensor.close();
+            led1.close();
+        }
+    }
+    
+    
     @Override
     public void startApp() 
     {
-        //getLocalIP();
-        System.out.println( "Your IP is " + getDataFromServer("http://kdeesh.7ci.ru/get_ip.php") );
-        String system_information = getDataFromServer("http://kdeesh.7ci.ru/connection.php");
-        if (system_information.contains("You aren't registered!"))
-        {
-            System.out.println("Device isn't registered!");
-            return;
-        }
-        else if (system_information.contains("You have more then one device"))
-        {
-            System.out.println("You have more then one device!");
-            return;
-        }
-        else
-        {
-            hash = system_information.substring(1, 33);
-            dev_id = system_information.substring(34);
-            System.out.println("hash id " + hash + " id is " + dev_id);
-        }
-        checker = new CheckLED();
-        checker.start();
-        measuring = new SendTemperature();
-        measuring.start();
+        detector = new CheckMotion();
+        detector.start();
+//        //getLocalIP();
+//        System.out.println( "Your IP is " + getDataFromServer("http://kdeesh.7ci.ru/get_ip.php") );
+//        String system_information = getDataFromServer("http://kdeesh.7ci.ru/connection.php");
+//        if (system_information.contains("You aren't registered!"))
+//        {
+//            System.out.println("Device isn't registered!");
+//            return;
+//        }
+//        else if (system_information.contains("You have more then one device"))
+//        {
+//            System.out.println("You have more then one device!");
+//            return;
+//        }
+//        else
+//        {
+//            hash = system_information.substring(1, 33);
+//            dev_id = system_information.substring(34);
+//            System.out.println("hash id " + hash + " id is " + dev_id);
+//        }
+//        checker = new CheckLED();
+//        checker.start();
+//        measuring = new CheckTemperature();
+//        measuring.start();
     }
     
     @Override
@@ -335,11 +434,13 @@ public class Body extends MIDlet
        try 
        {
            checker.quit();
+           detector.quit();
        } 
        catch (IOException ex) 
        {
-           System.out.println("error while closing led");
+           System.out.println("error while closing led or motion sensor");
        }
         measuring.quit();
+        
     }
 }
