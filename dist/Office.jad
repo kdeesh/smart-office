@@ -1,5 +1,5 @@
-MIDlet-1: Body,,apps.Body
-MIDlet-Jar-Size: 13023
+MIDlet-1: Body,,ru.beeline.Body
+MIDlet-Jar-Size: 15801
 MIDlet-Jar-URL: Office.jar
 MIDlet-Name: RestAPI
 MIDlet-Permission-1: javax.microedition.io.SocketProtocolPermission "socket://*:*"

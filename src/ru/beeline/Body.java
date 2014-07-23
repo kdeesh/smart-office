@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-package apps;
+package ru.beeline;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
